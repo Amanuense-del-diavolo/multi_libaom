@@ -21,7 +21,7 @@ do
 	tmp=$(ls -S weighting/ | head -1)
 	mv weighting/"$tmp" weighted/$i$tmp
 done
-for crf_val in {17..30} 
+for crf_val in {29..29} 
 do 
 	tmp=$count
 	d1=$((tmp-=1))
