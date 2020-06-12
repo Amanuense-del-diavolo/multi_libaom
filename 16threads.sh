@@ -1,9 +1,32 @@
 #! /bin/bash
+
+
+
+ffmpeg_looped (){
+	local z="$1"
+	local aa=$(ls weighted/ | grep "$z"i )
+	if [ ! -z $aa ]
+	then
+		cd weighted
+		mv "$aa" ../encoding/"$aa"
+		cd ..
+		yes | ffmpeg -i encoding/$aa -c:v libaom-av1 -crf "$crf_val" -minrate 500k -b:v 2000k -maxrate 2500k -pass 1 -passlogfile log"$aa" -strict -2 -an -f matroska /dev/null 2> ../log_ffmpeg/log-${aa#$z}
+		ffmpeg -i encoding/"$aa" -c:v libaom-av1 -crf "$crf_val" -minrate 500k -b:v 2000k -maxrate 2500k -pass 2 -passlogfile log"$aa" -strict -2 av1_encoded/${aa#$z} 2> ../log_ffmpeg/log-${aa#$z}
+		cd encoding
+		mv "$aa" ../used/"$aa"
+		cd ../
+#		rm log"$aa""-0".log
+	fi
+}
+
+
+
 tim=$(date)
 echo "start $tim" > time
-original=$1
-name=$2
-mkdir ../fatto WIP WIP/encoding WIP/av1_encoded WIP/weighting WIP/weighted WIP/used
+original="$1"
+name="$2"
+echo name→$name original→$original
+mkdir ../fatto WIP WIP/encoding WIP/av1_encoded WIP/weighting WIP/weighted WIP/used log_ffmpeg
 count=$(ffprobe -show_frames "$original" | grep -c pict_type=I)
 num=${#count} 
 count=$((count-=1))
@@ -19,9 +42,9 @@ done
 for i in $(seq -w 0 $count)
 do
 	tmp=$(ls -S weighting/ | head -1)
-	mv weighting/"$tmp" weighted/$i$tmp
+	mv weighting/"$tmp" weighted/"$i""$tmp"
 done
-for crf_val in {29..29} 
+for crf_val in {27..30} 
 do 
 	tmp=$count
 	d1=$((tmp-=1))
@@ -34,115 +57,67 @@ do
 	(
 	for a in $(seq -w 0 $count)
 	do
-	       aa=$(ls weighted/ | grep ${a}i )
-	       mv weighted/$aa encoding/$aa
-	       ffmpeg -i encoding/$aa -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${aa#$a}
-	       mv encoding/$aa used/$aa
+		ffmpeg_looped "$a"
 	done |
 	for b in $(seq -w $count -1 8)
 	do
-		bb=$(ls weighted/ | grep ${b}i )
-		mv weighted/$bb encoding/$bb
-		ffmpeg -i encoding/$bb -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${bb#$b}
-		mv encoding/$bb used/$bb
+		ffmpeg_looped "$b"
 	done |
 	for c in $(seq -w 1 $count)
 	do
-		cc=$(ls weighted/ | grep ${c}i )
-		mv weighted/$cc encoding/$cc
-		ffmpeg -i encoding/$cc -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${cc#$c}
-		mv encoding/$cc used/$cc
+		ffmpeg_looped "$c"
 	done |
 	for d in $(seq -w $d1 -1 8)
 	do
-		dd=$(ls weighted/ | grep ${d}i )
-		mv weighted/$dd encoding/$dd
-		ffmpeg -i encoding/$dd -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${dd#$d}
-		mv encoding/$dd used/$dd
+		ffmpeg_looped "$d"
 	done |
 	for e in $(seq -w 2 $count)
 	do
-		ee=$(ls weighted/ | grep ${e}i )
-		mv weighted/$ee encoding/$ee
-		ffmpeg -i encoding/$ee -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${ee#$e}
-		mv encoding/$ee used/$ee
+		ffmpeg_looped "$e"
 	done |
 	for f in $(seq -w $f1 -1 8)
 	do
-		ff=$(ls weighted/ | grep ${f}i )
-		mv weighted/$ff encoding/$ff
-		ffmpeg -i encoding/$ff -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${ff#$f}
-		mv encoding/$ff used/$ff
+		ffmpeg_looped "$f"
 	done |
 	for g in $(seq -w 3 $count)
 	do
-		gg=$(ls weighted/ | grep ${g}i )
-		mv weighted/$gg encoding/$gg
-		ffmpeg -i encoding/$gg -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${gg#$g}
-		mv encoding/$gg used/$gg
+		ffmpeg_looped "$g"
 	done |
 	for h in $(seq -w $h1 -1 8)
 	do
-		hh=$(ls weighted/ | grep ${h}i )
-		mv weighted/$hh encoding/$hh
-		ffmpeg -i encoding/$hh -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${hh#$h}
-		mv encoding/$hh used/$hh
+		ffmpeg_looped "$h"
 	done |
 	for i in $(seq -w 4 $count)
 	do
-		ii=$(ls weighted/ | grep ${i}i )
-		mv weighted/$ii encoding/$ii
-		ffmpeg -i encoding/$ii -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${ii#$i}
-		mv encoding/$ii used/$ii
+		ffmpeg_looped "$i"
 	done |
 	for j in $(seq -w $j1 -1 8)
 	do
-		jj=$(ls weighted/ | grep ${j}i )
-		mv weighted/$jj encoding/$jj
-		ffmpeg -i encoding/$jj -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${jj#$j}
-		mv encoding/$jj used/$jj
+		ffmpeg_looped "$j"
 	done |
 	for k in $(seq -w 5 $count)
 	do
-		kk=$(ls weighted/ | grep ${k}i )
-		mv weighted/$kk encoding/$kk
-		ffmpeg -i encoding/$kk -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${kk#$k}
-		mv encoding/$kk used/$kk
+		ffmpeg_looped "$k"
 	done |
 	for l in $(seq -w $l1 -1 8)
 	do
-		ll=$(ls weighted/ | grep ${l}i )
-		mv weighted/$ll encoding/$ll
-		ffmpeg -i encoding/$ll -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${ll#$l}
-		mv encoding/$ll used/$ll
+		ffmpeg_looped "$l"
 	done |
 	for m in $(seq -w 6 $count)
 	do
-		mm=$(ls weighted/ | grep ${m}i )
-		mv weighted/$mm encoding/$mm
-		ffmpeg -i encoding/$mm -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${mm#$m}
-		mv encoding/$mm used/$mm
+		ffmpeg_looped "$m"
 	done |
 	for n in $(seq -w $n1 -1 8)
 	do
-		nn=$(ls weighted/ | grep ${n}i )
-		mv weighted/$nn encoding/$nn
-		ffmpeg -i encoding/$nn -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${nn#$n}
-		mv encoding/$nn used/$nn
+		ffmpeg_looped "$n"
 	done |
 	for o in $(seq -w 7 $count)
 	do
-		oo=$(ls weighted/ | grep ${o}i )
-		mv weighted/$oo encoding/$oo
-		ffmpeg -i encoding/$oo -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${oo#$o}
-		mv encoding/$oo used/$oo
+		ffmpeg_looped "$o"
 	done |
 	for p in $(seq -w $p1 -1 8)
 	do
-		pp=$(ls weighted/ | grep ${p}i )
-		mv weighted/$pp encoding/$pp
-		ffmpeg -i encoding/$pp -c:v libaom-av1 -crf $crf_val -b:v 0 -strict -2 av1_encoded/${pp#$p}
-		mv encoding/$pp used/$pp
+		ffmpeg_looped "$p"
 	done
 	)
 	cd av1_encoded
@@ -159,3 +134,4 @@ do
 	mv WIP/used/* WIP/weighted/ 
 	cd WIP
 done
+
